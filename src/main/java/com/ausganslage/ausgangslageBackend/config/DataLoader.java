@@ -1,62 +1,54 @@
 package com.ausganslage.ausgangslageBackend.config;
 
-import com.ausganslage.ausgangslageBackend.model.Person;
-import com.ausganslage.ausgangslageBackend.model.Todo;
-import com.ausganslage.ausgangslageBackend.repository.PersonRepository;
-import com.ausganslage.ausgangslageBackend.repository.TodoRepository;
+import com.ausganslage.ausgangslageBackend.model.UserAccount;
+import com.ausganslage.ausgangslageBackend.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-
+/**
+ * DataLoader initializes the database with two default users: "eliza" and
+ * "admin"
+ */
 @Component
 public class DataLoader implements CommandLineRunner {
+    private final UserRepository userRepository;
 
-    private final PersonRepository personRepository;
-    private final TodoRepository todoRepository;
-
-    public DataLoader(PersonRepository personRepository, TodoRepository todoRepository) {
-        this.personRepository = personRepository;
-        this.todoRepository = todoRepository;
+    public DataLoader(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
     public void run(String... args) {
-        // Create Persons
-        Person marco = new Person();
-        marco.setName("Marco");
-        personRepository.save(marco);
+        try {
+            // Only seed if database is empty
+            if (userRepository.count() > 0) {
+                return;
+            }
 
-        Person anna = new Person();
-        anna.setName("Anna");
-        personRepository.save(anna);
+            // Create two default users
+            createUser("eliza", "eliza123");
+            createUser("admin", "admin123");
 
-        // Add Todos for Marco
-        Todo t1 = new Todo();
-        t1.setTitle("Finish Spring Boot project");
-        t1.setCompleted(false);
-        t1.setPerson(marco);
-        todoRepository.save(t1);
+        } catch (Exception e) {
+            System.err.println("Error loading initial data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
-        Todo t2 = new Todo();
-        t2.setTitle("Write documentation");
-        t2.setCompleted(true);
-        t2.setPerson(marco);
-        todoRepository.save(t2);
-
-        // Add Todos for Anna
-        Todo t3 = new Todo();
-        t3.setTitle("Prepare presentation");
-        t3.setCompleted(false);
-        t3.setPerson(anna);
-        todoRepository.save(t3);
-
-        // Add a Todo without a person (optional)
-        Todo t4 = new Todo();
-        t4.setTitle("General task (no person)");
-        t4.setCompleted(false);
-        todoRepository.save(t4);
-
-        System.out.println("Sample data loaded ✅");
+    /**
+     * Helper method to create and save a user
+     */
+    private UserAccount createUser(String username, String password) {
+        try {
+            UserAccount user = new UserAccount();
+            user.setUsername(username);
+            user.setPassword(password);
+            UserAccount saved = userRepository.save(user);
+            System.out.println("Created user: " + username);
+            return saved;
+        } catch (Exception e) {
+            System.err.println("Error creating user " + username + ": " + e.getMessage());
+            throw new RuntimeException("Failed to create user", e);
+        }
     }
 }
-
