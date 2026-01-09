@@ -13,10 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-/**
- * Authentication controller with proper exception handling
- * Handles login for users "eliza" and "admin"
- */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

@@ -1,9 +1,5 @@
 package com.ausganslage.ausgangslageBackend.exception;
 
-/**
- * Custom base exception for appointment application
- * Implements inheritance principle - base class for specific exceptions
- */
 public class AppException extends Exception {
     private String errorCode;
 

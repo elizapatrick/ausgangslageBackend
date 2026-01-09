@@ -1,6 +1,6 @@
 package com.ausganslage.ausgangslageBackend.service;
 
-import com.ausganslage.ausgangslageBackend.exception.AppointmentNotFoundException;
+import com.ausganslage.ausgangslageBackend.exception.InvalidAppointmentDataException;
 import com.ausganslage.ausgangslageBackend.exception.UserNotFoundException;
 import com.ausganslage.ausgangslageBackend.model.Appointment;
 import com.ausganslage.ausgangslageBackend.model.UserAccount;
@@ -28,13 +28,31 @@ public class AppointmentService {
     /**
      * Create new appointment
      * 
-     * @throws UserNotFoundException if user doesn't exist
+     * @throws UserNotFoundException           if user doesn't exist
+     * @throws InvalidAppointmentDataException if required fields are missing
      */
     public Appointment createAppointment(Appointment appointment, Long userId)
-            throws UserNotFoundException {
+            throws UserNotFoundException, InvalidAppointmentDataException {
 
         if (appointment == null) {
-            throw new IllegalArgumentException("Appointment cannot be null");
+            throw new InvalidAppointmentDataException("Appointment cannot be null");
+        }
+
+        // Validate required fields
+        if (appointment.getName() == null || appointment.getName().trim().isEmpty()) {
+            throw new InvalidAppointmentDataException("Appointment name is required");
+        }
+
+        if (appointment.getFromDate() == null) {
+            throw new InvalidAppointmentDataException("Appointment date (fromDate) is required");
+        }
+
+        if (appointment.getDescription() == null || appointment.getDescription().trim().isEmpty()) {
+            throw new InvalidAppointmentDataException("Appointment description is required");
+        }
+
+        if (appointment.getGenre() == null || appointment.getGenre().trim().isEmpty()) {
+            throw new InvalidAppointmentDataException("Appointment genre is required");
         }
 
         try {
@@ -72,60 +90,30 @@ public class AppointmentService {
 
     /**
      * Get appointment by ID
-     * 
-     * @throws AppointmentNotFoundException if appointment doesn't exist
      */
-    public Appointment getAppointmentById(Long appointmentId)
-            throws AppointmentNotFoundException {
-
-        try {
-            return appointmentRepository.findById(appointmentId)
-                    .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
-        } catch (AppointmentNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AppointmentNotFoundException("Error retrieving appointment: " + e.getMessage(), e);
-        }
+    public Appointment getAppointmentById(Long appointmentId) {
+        return appointmentRepository.findById(appointmentId)
+                .orElse(null);
     }
 
     /**
      * Update appointment notes
-     * 
-     * @throws AppointmentNotFoundException if appointment doesn't exist
      */
-    public Appointment updateAppointmentNotes(Long appointmentId, String notes)
-            throws AppointmentNotFoundException {
-
-        try {
-            Appointment appointment = appointmentRepository.findById(appointmentId)
-                    .orElseThrow(() -> new AppointmentNotFoundException("Appointment not found: " + appointmentId));
-
+    public Appointment updateAppointmentNotes(Long appointmentId, String notes) {
+        Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
+        if (appointment != null) {
             appointment.setNotes(notes);
             return appointmentRepository.save(appointment);
-        } catch (AppointmentNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AppointmentNotFoundException("Error updating appointment: " + e.getMessage(), e);
         }
+        return null;
     }
 
     /**
      * Delete appointment
-     * 
-     * @throws AppointmentNotFoundException if appointment doesn't exist
      */
-    public void deleteAppointment(Long appointmentId)
-            throws AppointmentNotFoundException {
-
-        try {
-            if (!appointmentRepository.existsById(appointmentId)) {
-                throw new AppointmentNotFoundException("Appointment not found: " + appointmentId);
-            }
+    public void deleteAppointment(Long appointmentId) {
+        if (appointmentRepository.existsById(appointmentId)) {
             appointmentRepository.deleteById(appointmentId);
-        } catch (AppointmentNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AppointmentNotFoundException("Error deleting appointment: " + e.getMessage(), e);
         }
     }
 

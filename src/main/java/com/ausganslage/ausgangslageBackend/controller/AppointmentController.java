@@ -1,6 +1,6 @@
 package com.ausganslage.ausgangslageBackend.controller;
 
-import com.ausganslage.ausgangslageBackend.exception.AppointmentNotFoundException;
+import com.ausganslage.ausgangslageBackend.exception.InvalidAppointmentDataException;
 import com.ausganslage.ausgangslageBackend.exception.UserNotFoundException;
 import com.ausganslage.ausgangslageBackend.model.Appointment;
 import com.ausganslage.ausgangslageBackend.service.AppointmentService;
@@ -39,6 +39,9 @@ public class AppointmentController {
             Appointment saved = appointmentService.createAppointment(appointment, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
 
+        } catch (InvalidAppointmentDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage(), "errorCode", e.getErrorCode()));
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", e.getMessage(), "errorCode", e.getErrorCode()));
@@ -98,11 +101,12 @@ public class AppointmentController {
         try {
             String notes = request.get("notes");
             Appointment updated = appointmentService.updateAppointmentNotes(appointmentId, notes);
+            if (updated == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Appointment not found"));
+            }
             return ResponseEntity.ok(updated);
 
-        } catch (AppointmentNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", e.getMessage(), "errorCode", e.getErrorCode()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error updating appointment: " + e.getMessage()));
@@ -118,9 +122,6 @@ public class AppointmentController {
             appointmentService.deleteAppointment(appointmentId);
             return ResponseEntity.ok(Map.of("message", "Appointment deleted successfully"));
 
-        } catch (AppointmentNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", e.getMessage(), "errorCode", e.getErrorCode()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Error deleting appointment: " + e.getMessage()));
